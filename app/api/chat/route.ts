@@ -1,101 +1,73 @@
-import { type NextRequest, NextResponse } from "next/server"
-import OpenAI from "openai"
+import { openai } from "@ai-sdk/openai"
+import { streamText } from "ai"
 import { KAAVYA_SYSTEM_PROMPT } from "@/lib/kaavya-context"
 import { getFallbackResponse } from "@/lib/fallback-responses"
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+export const maxDuration = 30
 
-export async function POST(request: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const { message, conversationHistory = [] } = await request.json()
+    const { message, conversationHistory } = await req.json()
 
-    if (!message) {
-      return NextResponse.json({ error: "Message is required" }, { status: 400 })
-    }
+    // Debug logging
+    console.log("API Route called with message:", message)
+    console.log("OpenAI API Key exists:", !!process.env.OPENAI_API_KEY)
 
-    // Check if OpenAI API key is configured
+    // Check if OpenAI API key is available
     if (!process.env.OPENAI_API_KEY) {
-      console.log("❌ No OpenAI API key found in environment variables")
-      const fallbackResponse = getFallbackResponse(message)
-      return NextResponse.json({ response: fallbackResponse, fallback: true })
+      console.log("No OpenAI API key found, using fallback")
+      return Response.json({
+        response: getFallbackResponse(message),
+        fallback: true,
+      })
     }
 
-    console.log("✅ OpenAI API key found, attempting connection...")
+    // Build messages array for OpenAI
+    const messages = [
+      { role: "system", content: KAAVYA_SYSTEM_PROMPT },
+      ...conversationHistory.map((msg: any) => ({
+        role: msg.isUser ? "user" : "assistant",
+        content: msg.text,
+      })),
+      { role: "user", content: message },
+    ]
 
-    try {
-      // Build the conversation with system prompt
-      const messages = [
-        {
-          role: "system" as const,
-          content: KAAVYA_SYSTEM_PROMPT,
-        },
-        // Include previous conversation for context (limit to last 8 messages to save tokens)
-        ...conversationHistory.slice(-8).map((msg: any) => ({
-          role: msg.isUser ? ("user" as const) : ("assistant" as const),
-          content: msg.text,
-        })),
-        {
-          role: "user" as const,
-          content: message,
-        },
-      ]
+    console.log("Attempting OpenAI API call...")
 
-      console.log("🚀 Sending request to OpenAI...")
+    const result = await streamText({
+      model: openai("gpt-4o-mini"), // Using cheaper model for testing
+      messages,
+      temperature: 0.7,
+      maxTokens: 500,
+    })
 
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: messages,
-        max_tokens: 400,
-        temperature: 0.7,
-      })
-
-      const response = completion.choices[0]?.message?.content
-
-      if (!response) {
-        throw new Error("No response generated from OpenAI")
-      }
-
-      console.log("✅ Successfully received response from OpenAI")
-      return NextResponse.json({ response })
-    } catch (openaiError: any) {
-      console.error("❌ OpenAI API error:", {
-        message: openaiError.message,
-        code: openaiError.code,
-        status: openaiError.status,
-        type: openaiError.type,
-      })
-
-      // Use fallback for specific OpenAI errors
-      if (
-        openaiError?.code === "insufficient_quota" ||
-        openaiError?.code === "rate_limit_exceeded" ||
-        openaiError?.status === 429 ||
-        openaiError?.status === 503 ||
-        openaiError?.code === "invalid_api_key"
-      ) {
-        console.log("🔄 Using fallback response due to API issue")
-        const fallbackResponse = getFallbackResponse(message)
-        return NextResponse.json({
-          response: fallbackResponse,
-          fallback: true,
-          fallbackReason: openaiError.message || "API temporarily unavailable",
-        })
-      }
-
-      // Re-throw other errors
-      throw openaiError
-    }
+    console.log("OpenAI API call successful")
+    return result.toDataStreamResponse()
   } catch (error: any) {
-    console.error("❌ Chat API error:", error)
+    console.error("API Error:", error)
 
-    // Final fallback for any other errors
-    const fallbackResponse = getFallbackResponse("")
-    return NextResponse.json({
-      response: fallbackResponse,
+    // If it's an API key or quota error, use fallback
+    if (
+      error.message?.includes("API key") ||
+      error.message?.includes("quota") ||
+      error.message?.includes("billing") ||
+      error.status === 401 ||
+      error.status === 429
+    ) {
+      console.log("Using fallback due to API/billing issue")
+      return Response.json({
+        response: getFallbackResponse(req.body ? JSON.parse(await req.text()).message : "Hello"),
+        fallback: true,
+      })
+    }
+
+    // For other errors, also use fallback
+    console.log("Using fallback due to other error")
+    const { message } = await req.json()
+    return Response.json({
+      response: getFallbackResponse(message),
       fallback: true,
-      fallbackReason: "Service temporarily unavailable",
+      error: error.message,
     })
   }
 }

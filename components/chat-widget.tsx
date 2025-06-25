@@ -132,6 +132,8 @@ export default function ChatWidget() {
       // Send conversation history for context (last 8 messages to save tokens)
       const conversationHistory = messages.slice(-8)
 
+      console.log("Sending request to /api/chat with message:", messageText)
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: {
@@ -143,7 +145,9 @@ export default function ChatWidget() {
         }),
       })
 
+      console.log("Response status:", response.status)
       const data = await response.json()
+      console.log("Response data:", data)
 
       if (!response.ok && !data.fallback) {
         throw new Error(data.error || "Failed to get response")
@@ -162,6 +166,7 @@ export default function ChatWidget() {
 
       setMessages((prev) => [...prev, botMessage])
     } catch (error: any) {
+      console.error("Chat error:", error)
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: "I'm having trouble connecting right now, but I can still answer basic questions about Kaavya! Try asking about her background, projects, or skills.",
