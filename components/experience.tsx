@@ -20,7 +20,7 @@ const experiences = [
     title: "Software Solutions and Operational Excellence Intern",
     company: "SES Space & Defense",
     period: "June - August 2025",
-    location: "Remote",
+    location: "Reston, VA",
     description: [
       "Supporting automation and internal tooling efforts impacting 100+ internal users across strategic ops functions",
       "Developed and maintained Salesforce-based dashboards and utilities to streamline business operations",

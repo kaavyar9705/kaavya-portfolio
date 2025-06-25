@@ -30,7 +30,7 @@ export default function About() {
             <CardContent className="p-8">
               <h3 className="text-2xl font-semibold mb-4 text-purple-600">Professional Impact</h3>
               <p className="text-gray-600 mb-4">
-                Currently working as a Software Engineer at Hack4Impact and Data Analytics Intern at Mindsprint,
+                Currently working as an Operations Excellence Intern at SES Space and Defense and Data Analytics Intern at Mindsprint,
                 building solutions that impact thousands of users globally.
               </p>
               <p className="text-gray-600">
