@@ -1,7 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { Resend } from "resend"
-
-const resend = new Resend(process.env.RESEND_API_KEY)
+import nodemailer from "nodemailer"
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,75 +17,152 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid email format" }, { status: 400 })
     }
 
-    // Check if Resend API key is configured
-    if (!process.env.RESEND_API_KEY) {
-      console.error("RESEND_API_KEY is not configured")
-      return NextResponse.json({ error: "Email service not configured" }, { status: 500 })
-    }
-
-    try {
-      // Send email to you (Kaavya)
-      const { data, error } = await resend.emails.send({
-        from: "Portfolio Contact <noreply@yourdomain.com>", // You'll need to update this
-        to: ["kaavyakri@gmail.com"],
-        subject: `Portfolio Contact: ${subject}`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <div style="background: linear-gradient(135deg, #9333ea 0%, #2563eb 100%); padding: 20px; border-radius: 8px 8px 0 0;">
-              <h1 style="color: white; margin: 0; font-size: 24px;">New Portfolio Contact</h1>
-            </div>
-            <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 8px 8px; border: 1px solid #e2e8f0;">
-              <div style="margin-bottom: 20px;">
-                <h3 style="color: #1e293b; margin: 0 0 10px 0;">Contact Details:</h3>
-                <p style="margin: 5px 0;"><strong>Name:</strong> ${name}</p>
-                <p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p>
-                <p style="margin: 5px 0;"><strong>Subject:</strong> ${subject}</p>
-              </div>
-              
-              <div style="margin-top: 20px;">
-                <h3 style="color: #1e293b; margin: 0 0 10px 0;">Message:</h3>
-                <div style="background: white; padding: 15px; border-radius: 6px; border-left: 4px solid #9333ea;">
-                  ${message.replace(/\n/g, "<br>")}
-                </div>
-              </div>
-              
-              <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
-                <p style="color: #64748b; font-size: 14px; margin: 0;">
-                  This message was sent from your portfolio contact form.
-                </p>
-              </div>
-            </div>
-          </div>
-        `,
-        replyTo: email, // This allows you to reply directly to the sender
-      })
-
-      if (error) {
-        console.error("Resend error:", error)
-        return NextResponse.json({ error: "Failed to send email" }, { status: 500 })
-      }
-
-      // Log successful submission
-      console.log("Contact form submission sent successfully:", {
-        name,
-        email,
-        subject,
-        messageId: data?.id,
-        timestamp: new Date().toISOString(),
-      })
-
+    // Check if Gmail credentials are configured
+    if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+      console.error("Gmail credentials not configured")
       return NextResponse.json(
         {
-          message: "Message sent successfully! I'll get back to you soon.",
+          error: "Email service not configured. Please contact the administrator.",
         },
-        { status: 200 },
+        { status: 500 },
       )
-    } catch (emailError) {
-      console.error("Email sending error:", emailError)
-      return NextResponse.json({ error: "Failed to send email" }, { status: 500 })
     }
-  } catch (error) {
+
+    console.log("Setting up Gmail transporter...")
+
+    // Create Gmail transporter
+    const transporter = nodemailer.createTransporter({
+      service: "gmail",
+      auth: {
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD,
+      },
+    })
+
+    // Verify transporter configuration
+    try {
+      await transporter.verify()
+      console.log("Gmail transporter verified successfully")
+    } catch (verifyError) {
+      console.error("Gmail transporter verification failed:", verifyError)
+      return NextResponse.json(
+        {
+          error: "Email service configuration error",
+        },
+        { status: 500 },
+      )
+    }
+
+    // Email content
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Portfolio Contact</title>
+      </head>
+      <body style="margin: 0; padding: 20px; font-family: Arial, sans-serif; background-color: #f5f5f5;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          
+          <!-- Header -->
+          <div style="background: linear-gradient(135deg, #9333ea 0%, #2563eb 100%); padding: 30px 20px; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px; font-weight: bold;">
+              💜 New Portfolio Contact
+            </h1>
+            <p style="color: rgba(255, 255, 255, 0.9); margin: 10px 0 0 0; font-size: 16px;">
+              Someone reached out through your website!
+            </p>
+          </div>
+
+          <!-- Content -->
+          <div style="padding: 30px;">
+            
+            <!-- Contact Info -->
+            <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 25px; border-left: 4px solid #9333ea;">
+              <h2 style="color: #1e293b; margin: 0 0 15px 0; font-size: 20px;">Contact Information</h2>
+              <div style="margin-bottom: 10px;">
+                <strong style="color: #475569;">Name:</strong>
+                <span style="color: #1e293b; margin-left: 10px;">${name}</span>
+              </div>
+              <div style="margin-bottom: 10px;">
+                <strong style="color: #475569;">Email:</strong>
+                <span style="color: #1e293b; margin-left: 10px;">
+                  <a href="mailto:${email}" style="color: #9333ea; text-decoration: none;">${email}</a>
+                </span>
+              </div>
+              <div>
+                <strong style="color: #475569;">Subject:</strong>
+                <span style="color: #1e293b; margin-left: 10px;">${subject}</span>
+              </div>
+            </div>
+
+            <!-- Message -->
+            <div style="margin-bottom: 25px;">
+              <h2 style="color: #1e293b; margin: 0 0 15px 0; font-size: 20px;">Message</h2>
+              <div style="background-color: white; padding: 20px; border-radius: 8px; border: 2px solid #e2e8f0; line-height: 1.6;">
+                ${message.replace(/\n/g, "<br>")}
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="mailto:${email}?subject=Re: ${encodeURIComponent(subject)}" 
+                 style="display: inline-block; background: linear-gradient(135deg, #9333ea 0%, #2563eb 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; margin-right: 10px;">
+                Reply to ${name}
+              </a>
+            </div>
+
+            <!-- Footer -->
+            <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; text-align: center;">
+              <p style="color: #64748b; font-size: 14px; margin: 0;">
+                📧 This message was sent from your portfolio contact form<br>
+                🕒 Received on ${new Date().toLocaleString("en-US", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  timeZoneName: "short",
+                })}
+              </p>
+            </div>
+
+          </div>
+        </div>
+      </body>
+      </html>
+    `
+
+    // Email options
+    const mailOptions = {
+      from: `"Portfolio Contact" <${process.env.GMAIL_USER}>`,
+      to: "kaavyakri@gmail.com",
+      subject: `🌟 Portfolio Contact: ${subject}`,
+      html: htmlContent,
+      replyTo: email,
+    }
+
+    console.log("Sending email...")
+
+    // Send email
+    const info = await transporter.sendMail(mailOptions)
+    console.log("Email sent successfully:", info.messageId)
+
+    return NextResponse.json(
+      {
+        message: "Message sent successfully! I'll get back to you soon. 💜",
+      },
+      { status: 200 },
+    )
+  } catch (error: any) {
     console.error("Contact form error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: `Failed to send message: ${error.message || "Please try again later"}`,
+      },
+      { status: 500 },
+    )
   }
 }

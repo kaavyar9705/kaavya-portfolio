@@ -55,6 +55,65 @@ const experiences = [
   },
 ]
 
+// Add new volunteer experiences array
+const volunteerExperiences = [
+  {
+    title: "Outreach Organizer",
+    company: "Technica",
+    period: "April 2025 - Present",
+    location: "University of Maryland",
+    description: [
+      "Leading outreach to 50+ universities, high schools, and organizations to help recruit 1,500+ participants for Technica 2025",
+      "Manage communications, build partnerships, and engage new communities to expand access to the world's largest all-women and nonbinary hackathon",
+      "Coordinate with marketing and logistics teams to ensure successful event execution",
+    ],
+    skills: ["Community Outreach", "Partnership Development", "Event Management"],
+  },
+  {
+    title: "Director of Community Outreach & Java Mentor",
+    company: "Codefy",
+    period: "March 2020 – Present",
+    location: "McLean, VA",
+    description: [
+      "Leading community outreach for 501(c)(3) nonprofit organization dedicated to providing free computer science education",
+      "Earned the Gold Presidential Volunteer Service Award for exceptional community service",
+      "Supervised 10+ volunteers and led efforts to recruit over 2,300 students nationwide",
+      "Mentored students in Java programming, helping them develop foundational coding skills",
+    ],
+    skills: ["Nonprofit Leadership", "Java", "Volunteer Management", "Educational Outreach"],
+  },
+  {
+    title: "Logistics Chair",
+    company: "Maryland Dhoom",
+    period: "Present",
+    location: "University of Maryland",
+    description: [
+      "Leading logistics coordination for Maryland's premier Bollywood-fusion dance team",
+      "Managing event planning, scheduling, and operational coordination for performances and competitions",
+      "Coordinating with team members to ensure smooth execution of rehearsals and showcases",
+      "Overseeing equipment, venue logistics, and performance preparation for campus and external events",
+    ],
+    skills: ["Event Planning", "Team Leadership", "Logistics Management", "Performance Coordination"],
+  },
+]
+
+// Add teaching experience array
+const teachingExperiences = [
+  {
+    title: "Math Instructor",
+    company: "Mathnasium",
+    period: "January 2023 – Present",
+    location: "Sterling, VA",
+    description: [
+      "Taught 30+ students, providing individualized instruction in a group setting",
+      "Utilized digital educational tools to assess progress and deliver Mathnasium Method™",
+      "Collaborated with team members to create engaging and tailored learning experiences",
+      "Adapted teaching methods to accommodate different learning styles and skill levels",
+    ],
+    skills: ["Mathematics", "Educational Technology", "Individualized Instruction", "Student Assessment"],
+  },
+]
+
 export default function Experience() {
   return (
     <section id="experience" className="py-20 bg-gray-50">
@@ -66,7 +125,8 @@ export default function Experience() {
           <p className="text-xl text-gray-600">My journey in technology and software development</p>
         </div>
 
-        <div className="space-y-8">
+        {/* Professional Experience */}
+        <div className="space-y-8 mb-16">
           {experiences.map((exp, index) => (
             <Card key={index} className="hover:shadow-lg transition-shadow">
               <CardHeader>
@@ -98,6 +158,104 @@ export default function Experience() {
                 <div className="flex flex-wrap gap-2">
                   {exp.skills.map((skill, skillIndex) => (
                     <Badge key={skillIndex} variant="secondary">
+                      {skill}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Volunteer Work Section */}
+        <div className="text-center mb-12">
+          <h3 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">
+            Volunteer Work & Leadership
+          </h3>
+          <p className="text-lg text-gray-600">Community involvement and nonprofit leadership</p>
+        </div>
+
+        <div className="space-y-8 mb-16">
+          {volunteerExperiences.map((exp, index) => (
+            <Card key={index} className="hover:shadow-lg transition-shadow border-l-4 border-l-indigo-500">
+              <CardHeader>
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <CardTitle className="text-xl text-indigo-600">{exp.title}</CardTitle>
+                    <p className="text-lg font-semibold text-gray-900">{exp.company}</p>
+                  </div>
+                  <div className="flex flex-col md:items-end mt-2 md:mt-0">
+                    <div className="flex items-center text-gray-600 mb-1">
+                      <Calendar size={16} className="mr-2" />
+                      {exp.period}
+                    </div>
+                    <div className="flex items-center text-gray-600">
+                      <MapPin size={16} className="mr-2" />
+                      {exp.location}
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 mb-4">
+                  {exp.description.map((item, itemIndex) => (
+                    <li key={itemIndex} className="text-gray-600">
+                      • {item}
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex flex-wrap gap-2">
+                  {exp.skills.map((skill, skillIndex) => (
+                    <Badge key={skillIndex} variant="outline" className="border-indigo-200 text-indigo-700">
+                      {skill}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Teaching Experience Section */}
+        <div className="text-center mb-12">
+          <h3 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent mb-4">
+            Teaching Experience
+          </h3>
+          <p className="text-lg text-gray-600">Educational instruction and mentorship</p>
+        </div>
+
+        <div className="space-y-8">
+          {teachingExperiences.map((exp, index) => (
+            <Card key={index} className="hover:shadow-lg transition-shadow border-l-4 border-l-green-500">
+              <CardHeader>
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <CardTitle className="text-xl text-green-600">{exp.title}</CardTitle>
+                    <p className="text-lg font-semibold text-gray-900">{exp.company}</p>
+                  </div>
+                  <div className="flex flex-col md:items-end mt-2 md:mt-0">
+                    <div className="flex items-center text-gray-600 mb-1">
+                      <Calendar size={16} className="mr-2" />
+                      {exp.period}
+                    </div>
+                    <div className="flex items-center text-gray-600">
+                      <MapPin size={16} className="mr-2" />
+                      {exp.location}
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 mb-4">
+                  {exp.description.map((item, itemIndex) => (
+                    <li key={itemIndex} className="text-gray-600">
+                      • {item}
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex flex-wrap gap-2">
+                  {exp.skills.map((skill, skillIndex) => (
+                    <Badge key={skillIndex} variant="outline" className="border-green-200 text-green-700">
                       {skill}
                     </Badge>
                   ))}
